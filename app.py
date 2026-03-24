@@ -1,207 +1,151 @@
 import streamlit as st
-
-st.title("Demo Streamlit")
-
-st.write("Hello World")
-
-
-
-import streamlit as st
-
-# đọc file excel
-import plotly.express as px
 import pandas as pd
-from scipy.stats import ttest_ind
 import numpy as np
-from scipy import stats
 
-st.title("Data Analysis Dashboard")
+# ---------- Page config ----------
+st.set_page_config(
+    page_title="Global Unicorn Companies Analytics",
+    page_icon='🦄',
+    layout="wide",
+)
 
-def to_snake(name):
-    name = name.strip().replace(' ($B)','')
-    name = name.lower()
-    name = name.replace(' ','_')
+# ---------- GLOBAL THEME (fonts, colors) ----------
+PRIMARY_COLOR = "#0F766E"  # teal
+BG_COLOR = "#0B1120"       # dark navy
+CARD_BG = "#020617"        # slightly darker
+TEXT_COLOR = "#E5E7EB"     # light gray
+ACCENT_COLOR = "#FBBF24"   # warm accent
+
+st.markdown(
+    f"""
+    <style>
+    html, body, [class*="css"] {{
+        background-color: {BG_COLOR};
+        color: {TEXT_COLOR};
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+                     "Segoe UI", sans-serif;
+    }}
+    .block-container {{
+        padding-top: 1.5rem;
+        padding-bottom: 2rem;
+    }}
+    h1, h2, h3, h4 {{
+        color: {TEXT_COLOR};
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }}
+    div[data-testid="stMetricValue"] {{
+        color: {ACCENT_COLOR} !important;
+        font-weight: 700;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ---------- Intro copy ----------
+st.title("🦄 Global Unicorn Companies Analytics")
+
+st.markdown(
+    """
+This dashboard answers four core questions about unicorn startups:
+
+- **What** is the current unicorn landscape in terms of count, valuation, and time to reach unicorn status?  
+- **Why** are certain industries and regions leading in value creation?  
+- **How** do funding, valuation efficiency, and investor patterns differ across the ecosystem?  
+- **What actions** can founders, investors, and ecosystem builders take next?
+
+Use the sidebar navigation to switch between:
+
+1. **Overview & Growth Trends** highlevel size, timing, and industry mix.  
+2. **Valuation & Funding** valuation distribution, ROI, and industry comparisons.  
+3. **Locations & Investors** geographic hubs, key investors, and a detailed company list.
+"""
+)
+
+# ---------- Shared utilities ----------
+def to_snake(name: str) -> str:
+    name = name.strip().replace(" ($B)", "")
+    name = name.lower().replace(" ", "_")
     return name
 
-def get_metadata():
-  df = pd.read_csv('companies_metadata - companies_metadata.csv')[['Company','Funding','Year Founded']]
-  df.columns = ['company','funding','year_founded']
-  df['funding'] = df['funding'].apply(lambda x: x if x!='Unknown' else np.nan)
-  df['funding'] = df['funding'].str.replace('$','').str.replace('B','').str.replace('M','').astype(float)
-  return df
 
-@st.cache_resource
-def load_data():
-    df = pd.read_csv('./unicorns_companies - unicorns_companies.csv')
-    df.columns = df.columns.map(to_snake)
-    df['valuation'] = df['valuation'].str.replace('$', '').astype(float)
-    df['date_joined'] = pd.to_datetime(df['date_joined'])
-    df['date_joined'] = df['date_joined'].dt.year
-    df.loc[df['company']=='LinkSure Network', 'investors'] = (
-        'Bank of China Group Investment, China Merchants Innovation '
-        'Investment Management, and Hopu Fund'
+def get_metadata() -> pd.DataFrame:
+    df = pd.read_csv("companies_metadata - companies_metadata.csv")[["Company", "Funding", "Year Founded"]]
+    df.columns = ["company", "funding", "year_founded"]
+    df["funding"] = df["funding"].apply(lambda x: x if x != "Unknown" else np.nan)
+    df["funding"] = (
+        df["funding"]
+        .str.replace("$", "", regex=False)
+        .str.replace("B", "", regex=False)
+        .str.replace("M", "", regex=False)
+        .astype(float)
     )
-    df['investors'] = df['investors'].fillna(df['industry'])
-    df.loc[df['investors'] == df['industry'], 'industry'] = df['city']
-    df.loc[df['industry'] == df['investors'], 'industry'] = df['city']
-    df.loc[df['city'] == df['industry'], 'city'] = df['country']
-    df['industry'] = df['industry'].str.capitalize()
-    df['city'] = df['city'].str.title()
-    df['country'] = df['country'].str.title()
-    df['company'] = df['company'].str.title()
-    metadata = get_metadata()
-    metadata['company'] = metadata['company'].str.title()
-    df = pd.merge(
-        df,
-        metadata,
-        how='left',
-        on='company'
-    )
+    df["company"] = df["company"].str.title()
     return df
 
-try:
-    unicorns_merged = load_data()
-    # st.write("Data loaded OK")  # debug
 
-    top_valuation = unicorns_merged.nlargest(5, 'valuation')[['company', 'valuation']]
-    st.table(top_valuation)
-    fig = px.bar(
-        top_valuation,
-        x='valuation',
-        y='company',
-        orientation='h',
-        title='Top Unicorns by Valuation',
-        labels = {'valuation':'Valuation ($B)','company':'Company'}
+@st.cache_data
+def load_unicorn_data() -> pd.DataFrame:
+    df = pd.read_csv("unicorns_companies - unicorns_companies.csv")
+    df.columns = df.columns.map(to_snake)
+
+    df["valuation"] = (
+        df["valuation"].str.replace("$", "", regex=False).astype(float)
     )
-    st.plotly_chart(fig)
+    df["date_joined"] = pd.to_datetime(df["date_joined"]).dt.year
 
-
-    bins = [0,1,2,5,10,20,50,100,500]
-    labels = ['1-2B','2-5B','5-10B','10-20B','20-50B','50-100B','100-500B','500+']
-    unicorns_merged['valuation_bands'] = pd.cut(unicorns_merged['valuation'], bins = bins, labels = labels)
-    unicorn_merged = unicorns_merged['valuation_bands'].value_counts().sort_index()
-    band_counts = unicorns_merged['valuation_bands'].value_counts().sort_index()
-    band_df = band_counts.reset_index()
-    band_df.columns = ['valuation_band','count']
-
-    fig_bar = px.bar(
-        band_df,
-        x='count',
-        y='valuation_band',
-        orientation='h',
-        title='Unicorn Count by Valuation Band',
-        labels = {'count':'Number of Unicorns','valuation_band':'Valuation Band'}
-    )
-    st.plotly_chart(fig_bar)
-
-    fig_barv = px.bar(
-        band_df,
-        x="valuation_band",
-        y="count",
-        title="Unicorn Count by Valuation Band",
-        labels={"count": "Number of Unicorns", "valuation_band": "Valuation Band"},
-    )
-    fig_barv.update_layout(xaxis_tickangle=-45)
-    st.plotly_chart(fig_barv)
-
-    st.write(stats.skew(unicorns_merged['valuation'].values))
-
-    fig_pie = px.pie(
-        band_df,
-        names="valuation_band",
-        values="count",
-        title="Valuation Band Proportions",
-    )
-    st.plotly_chart(fig_pie)
-
-    year_counts = unicorns_merged['year_founded'].value_counts().sort_index()
-    year_df = year_counts.reset_index()
-    year_df.columns = ['year_founded','count']
-    fig_year = px.line(
-        year_df,
-        x='year_founded',
-        y='count',
-        title='Unicorn Foundings over time',
-        labels = {'year_founded':'Founded Year','count':'Number of Unicorns'},
-        markers=True
-    )
-    st.plotly_chart(fig_year)
-
-    val_by_ind_year = unicorns_merged.groupby(['date_joined','industry'])['valuation'].sum().reset_index()
-    fig_val_by_ind_year_heatnmap = px.density_heatmap(
-        val_by_ind_year,
-        x='date_joined',
-        y='industry',
-        z='valuation',
-        color_continuous_scale='Blues',
-        title='Total unicorn valuation by industry over the years'
+    df.loc[df["company"] == "Linksure Network", "investors"] = (
+        "Bank of China Group Investment, China Merchants Innovation "
+        "Investment Management, and Hopu Fund"
     )
 
-    st.plotly_chart(fig_val_by_ind_year_heatnmap)
+    df["investors"] = df["investors"].fillna(df["industry"])
+    df.loc[df["investors"] == df["industry"], "industry"] = df["city"]
+    df.loc[df["industry"] == df["investors"], "industry"] = df["city"]
+    df.loc[df["city"] == df["industry"], "city"] = df["country"]
 
-    fig_val_by_ind_year_line = px.line(
-        val_by_ind_year,
-        x='date_joined',
-        y='valuation',
-        color='industry',
-        title='Total unicorn valuation by industry over the years',
-        markers=True
-    )
-    st.plotly_chart(fig_val_by_ind_year_line)
+    df["industry"] = df["industry"].str.capitalize()
+    df["city"] = df["city"].str.title()
+    df["country"] = df["country"].str.title()
+    df["company"] = df["company"].str.title()
 
-    industry1 = unicorns_merged[unicorns_merged['industry']=='Artificial intelligence']['valuation']
-    industry2 = unicorns_merged[unicorns_merged['industry']=='Internet']['valuation']
-    t_stat, p_value = ttest_ind(industry1, industry2, equal_var=False)
+    metadata = get_metadata()
+    df = pd.merge(df, metadata, how="left", on="company")
 
-    unicorns_merged['roi'] = unicorns_merged['valuation']/unicorns_merged['funding']
-    top_roi = unicorns_merged.nlargest(5, 'roi')[['company', 'roi']]
+    if "continent" not in df.columns:
+        country_to_continent = {
+            "United States": "North America",
+            "Canada": "North America",
+            "Mexico": "North America",
+            "Brazil": "South America",
+            "Argentina": "South America",
+            "United Kingdom": "Europe",
+            "Germany": "Europe",
+            "France": "Europe",
+            "Spain": "Europe",
+            "Sweden": "Europe",
+            "China": "Asia",
+            "India": "Asia",
+            "Japan": "Asia",
+            "South Korea": "Asia",
+            "Singapore": "Asia",
+            "Australia": "Oceania",
+            "New Zealand": "Oceania",
+            "South Africa": "Africa",
+            "Nigeria": "Africa",
+        }
+        df["continent"] = df["country"].map(country_to_continent).fillna("Other")
 
-    fig_roi = px.bar(
-        top_roi,
-        x='roi',
-        y='company',
-        orientation='h',
-        title='Top Unicorns by ROI',
-        labels = {'roi':'ROI ($B)','company':'Company'}
-    )
-    st.plotly_chart(fig_roi)
+    return df
 
-    city_industry_counts = (
-        unicorns_merged
-        .groupby(['city', 'industry'])
-        .size()
-        .reset_index(name='count')
-    )
 
-    city_industry_counts_fig = px.treemap(
-        city_industry_counts,
-        path=['city', 'industry'],
-        values='count',
-        title='City-Industry Unicorn Hubs'
-    )
-    st.plotly_chart(city_industry_counts_fig, key="city_industry_chart")
+if "unicorns_df" not in st.session_state:
+    try:
+        st.session_state["unicorns_df"] = load_unicorn_data()
+    except Exception as e:
+        st.error(f"Error loading data: {e}")
 
-    city_industry_counts_tree = px.treemap(
-        city_industry_counts,
-        path=['city', 'industry'],
-        values='count',
-        title='City-Industry Unicorn Hubs'
-    )
-    st.plotly_chart(city_industry_counts_tree)
 
-    all_investors = unicorns_merged['investors'].str.split(', ').explode().str.strip().value_counts()
-    top_investors = all_investors.head(12).reset_index()
-    top_investors.columns = ['investor','count']
-    top_investors_fig_barv = px.bar(
-        top_investors,
-        x="investor",
-        y="count",
-        title="Top 12 Investors",
-        labels={"investor": "Investor", "count": "Count"},
-    )
-    top_investors_fig_barv.update_layout(xaxis_tickangle=-45)
-    st.plotly_chart(top_investors_fig_barv)
-except Exception as e:
-    st.error(f"Error in load_data: {e}")
 
 

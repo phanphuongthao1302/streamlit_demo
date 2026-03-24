@@ -77,8 +77,9 @@ st.caption(f'Valuation skewness (positive = right-skewed):{skew_value}')
 
 st.markdown(
     """
-***Insight -What:** Most unicorns cluster in the lower valuation band, with a long right-tail or very large company, as indicated by the positive skew
-***Action:** When benchmarking a company, compare it to its ** valuation band peers** instead of only to extreme outliners
+**Insight -What:** Most unicorns cluster in the lower valuation band, with a long right-tail or very large company, as indicated by the positive skew
+
+**Action:** When benchmarking a company, compare it to its **valuation band peers** instead of only to extreme outliners
    """
 )
 
@@ -132,8 +133,9 @@ with tab2:
        )   
 st.markdown(
      """
-***Insight -How:** Some unicorns appear in both lists : others are large but capital-inefficient, or small but efficient 
-***Action:** Use the **ROI to shortlist capital-efficient companies** for investment or as operational benchmarks, not just the biggest names by valuation
+**Insight -How:** Some unicorns appear in both lists : others are large but capital-inefficient, or small but efficient 
+
+**Action:** Use the **ROI to shortlist capital-efficient companies** for investment or as operational benchmarks, not just the biggest names by valuation
    """
 )
 
@@ -179,8 +181,9 @@ with tab_line:
 
 st.markdown(
      """
-***Insight -Why:**Industries with rapidly rising total valuation are where **capital and expectations are shifting over time**
-***Action:** Align sector focus and hiring with **industries whose valuation is aceleration **in yout target region and year range. 
+**Insight -Why:** Industries with rapidly rising total valuation are where **capital and expectations are shifting over time**
+
+**Action:** Align sector focus and hiring with **industries whose valuation is aceleration** in yout target region and year range. 
 """
 )
 
@@ -264,7 +267,7 @@ capital efficiency.
             f"significant difference** between **{ind1}** and **{ind2}** at α = 0.05."
         )
 
-        st.markdown(
+            st.markdown(
             """
 **Action:** For these two industries, do **not** prioritize purely on valuation levels.  
 Let other factors such as **growth trajectory, risk profile, and unit economics**

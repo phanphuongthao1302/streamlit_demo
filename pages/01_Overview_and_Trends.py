@@ -49,7 +49,8 @@ with col4:
 
 st.markdown(
     """
-***Insight -What:** This snapshot shows the **overall size and maturity** of the unicorn universe for your selected years and countries
+***Insight -What:** This snapshot shows the **overall size and maturity** of the unicorn universe for your selected years and countries.
+
 ***Action:** Use these KPIs to quickly benchmark the unicorn landscape against other datasets and time periods.
 """
 )    
@@ -76,8 +77,9 @@ st.plotly_chart(fig_year, use_container_width=True)
 
 st.markdown(
     """
-***Insight -How:**Peaks or slowdowns in this chart reveal **aceleration or coooling*** in unicorns creation over time
-***Action:** Focus deeper analysis on periods with sharp changes (e.g. boom years) to understand drivers such as funding cycles or marco events
+**Insight-How:** Peaks or slowdowns in this chart reveal **aceleration or coooling** in unicorns creation over time
+
+**Action:** Focus deeper analysis on periods with sharp changes (e.g. boom years) to understand drivers such as funding cycles or marco events
    """
 )
 
@@ -103,8 +105,9 @@ st.plotly_chart(fig_cont, use_container_width=True)
 
 st.markdown(
     """
-***Insight -Why (geopraphy):** Differences between continent highlight ** regional strength ** in building unicorns
-***Action:** Use this view to prioritize ** scouting, hiring and expansion ** into regions with sustained growth ** or to identify under-served regions with merging potentials
+**Insight -Why (geopraphy):** Differences between continent highlight **regional strength** in building unicorns
+
+**Action:** Use this view to prioritize** scouting, hiring and expansion **into regions with sustained growth** or to identify under-served regions with merging potentials
    """
 )
 
@@ -149,8 +152,9 @@ if not ind_val.empty:
         )
         st.markdown(
     """
-***Insight -Why (industry):** In {recent_year}, the leading industry by valuation reveal where **capital and growth expectations** are concentrated
-***Action:** Target these industries for** deal flow, partnership or product offerings** if they align with your strategy** or look at lagging industries for contrarian opportunities
+**Insight -Why (industry):** In {recent_year}, the leading industry by valuation reveal where **capital and growth expectations** are concentrated
+
+**Action:** Target these industries for **deal flow, partnership or product offerings** if they align with your strategy or look at lagging industries for contrarian opportunities
    """
    )
 else:
